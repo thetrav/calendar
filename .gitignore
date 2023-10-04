@@ -1,2 +1,4 @@
 *.pyc
 .venv
+credentials.json
+token.json
