@@ -1,28 +1,44 @@
-from PIL import Image,ImageDraw,ImageFont
+from PIL import Image, ImageDraw, ImageFont
 from dataclasses import dataclass, field
 from model import Surface
+from google_calendar import CalendarDay, Event
 
-FONT_SIZE = 24
+FONT_SIZE_H1 = 24
+FONT_SIZE_SUMMARY = 12
 PADDING = 5
 
-BLACK  = 0x000000   #   00  BGR
-WHITE  = 0xffffff   #   01
-YELLOW = 0x00ffff   #   10
-RED    = 0x0000ff   #   11
+BLACK = 0x000000  #   00  BGR
+WHITE = 0xFFFFFF  #   01
+YELLOW = 0x00FFFF  #   10
+RED = 0x0000FF  #   11
 
-DEFAULT_FONT = ImageFont.truetype('Font.ttc', FONT_SIZE)
+DEFAULT_FONT_FILE = "Font.ttc"
+
+weekdays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+]
+
+
+def font(file=DEFAULT_FONT_FILE, size=FONT_SIZE_SUMMARY):
+    return ImageFont.truetype(file, size)
+
 
 @dataclass
 class Text:
     text: str
     color: int = BLACK
-    font: object = DEFAULT_FONT
+    font: object = font()
+
     def render(self, draw: ImageDraw, surface: Surface):
         draw.text(
-            (surface.left, surface.top), 
-            self.text, 
-            font=self.font, 
-            fill=self.color)
+            (surface.left, surface.top), self.text, font=self.font, fill=self.color
+        )
 
 
 @dataclass
@@ -38,17 +54,19 @@ class Box:
     def render(self, draw: ImageDraw, surface: Surface):
         t = surface.top
         b = surface.bottom
-        h = b-t
+        h = b - t
         l = surface.left
         r = surface.right
-        w = r-l
-        
+        w = r - l
+
         m = self.margin
         p = self.padding
 
         if self.stroke > 0:
-            border = (l+m, t+m, r-m, b-m)
-            draw.rectangle(border, fill = self.fill, outline = self.outline, width=self.stroke)
+            border = (l + m, t + m, r - m, b - m)
+            draw.rectangle(
+                border, fill=self.fill, outline=self.outline, width=self.stroke
+            )
 
         nc = len(self.children)
         for i, child in enumerate(self.children):
@@ -57,39 +75,54 @@ class Box:
             ct = t + m + p
             cb = b - m - p
             if self.horizontal:
-                step = (w-(m+p)*2) / nc
-                cl = l + m+p + int(step * i)
-                cr = l + m+p + int(step * (i + 1))
+                step = (w - (m + p) * 2) / nc
+                cl = l + m + p + int(step * i)
+                cr = l + m + p + int(step * (i + 1))
             else:
-                step = (h-(m+p)*2) / nc
-                ct = t + m+p + int(step * i)
-                cb = t + m+p + int(step * (i+1))
-            cs = Surface(top=ct,left=cl,right=cr,bottom=cb)
+                step = (h - (m + p) * 2) / nc
+                ct = t + m + p + int(step * i)
+                cb = t + m + p + int(step * (i + 1))
+            cs = Surface(top=ct, left=cl, right=cr, bottom=cb)
             child.render(draw, cs)
 
-def layout_calendars(calendars, surface):
-    image = Image.new('RGB', (surface.right, surface.bottom), surface.WHITE)  # 255: clear the frame
-    draw = ImageDraw.Draw(image)
 
-    box = \
-    Box(margin=5, outline=BLACK, children=[
-        Box(margin=5, padding=5, fill=RED, outline=BLACK, horizontal=False,
-            children=[
-                Text("Today"),
-                Box(fill=WHITE, outline=BLACK, children=[
-                    Text("This is a test")
-                ]),
-                Box(fill=WHITE, outline=BLACK),
-            ]),
-        Box(margin=5, fill = RED, outline = BLACK, horizontal=False,
-            children=[
-                Text("Tomorrow"),
-                Box(fill=WHITE, outline=BLACK),
-                Box(fill=BLACK, outline=BLACK),
-                Box(fill=YELLOW, outline=BLACK),
-                Box(fill=RED, outline=BLACK),
-            ])
-    ])
+def layout_calendars(calendars: list[CalendarDay], surface):
+    image = Image.new(
+        "RGB", (surface.right, surface.bottom), surface.WHITE
+    )  # 255: clear the frame
+    draw = ImageDraw.Draw(image)
+    box = Box(padding=5)
+    h1_font = font(size=FONT_SIZE_H1)
+    for day in calendars:
+        day_box = Box(padding=5, outline=BLACK, horizontal=False)
+        day_box.children.append(
+            Text(f"{weekdays[day.date.weekday()]} {day.date.isoformat()}", font=h1_font)
+        )
+        for event in day.whole_day_events:
+            day_box.children.append(
+                Box(
+                    padding=5,
+                    outline=RED,
+                    horizontal=False,
+                    children=[Text(f"{event.owner}\n    {event.summary}")],
+                )
+            )
+        for event in day.timed_events:
+            day_box.children.append(
+                Box(
+                    padding=5,
+                    horizontal=False,
+                    outline=RED,
+                    children=[
+                        Text(
+                            f"{event.owner}\n{event.start_time.hour}:{event.start_time.minute}\n    {event.summary}"
+                        )
+                    ],
+                )
+            )
+
+        box.children.append(day_box)
+
     box.render(draw, surface)
 
     # draw.text((5, 0), 'hello beth', font = font, fill = surface.RED)
