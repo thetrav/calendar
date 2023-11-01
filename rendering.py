@@ -10,6 +10,21 @@ WHITE  = 0xffffff   #   01
 YELLOW = 0x00ffff   #   10
 RED    = 0x0000ff   #   11
 
+DEFAULT_FONT = ImageFont.truetype('Font.ttc', FONT_SIZE)
+
+@dataclass
+class Text:
+    text: str
+    color: int = BLACK
+    font: object = DEFAULT_FONT
+    def render(self, draw: ImageDraw, surface: Surface):
+        draw.text(
+            (surface.left, surface.top), 
+            self.text, 
+            font=self.font, 
+            fill=self.color)
+
+
 @dataclass
 class Box:
     padding: int = PADDING
@@ -53,8 +68,6 @@ class Box:
             child.render(draw, cs)
 
 def layout_calendars(calendars, surface):
-    font = ImageFont.truetype('Font.ttc', FONT_SIZE)
-    
     image = Image.new('RGB', (surface.right, surface.bottom), surface.WHITE)  # 255: clear the frame
     draw = ImageDraw.Draw(image)
 
@@ -62,11 +75,15 @@ def layout_calendars(calendars, surface):
     Box(margin=5, outline=BLACK, children=[
         Box(margin=5, padding=5, fill=RED, outline=BLACK, horizontal=False,
             children=[
-                Box(fill=WHITE, outline=BLACK),
+                Text("Today"),
+                Box(fill=WHITE, outline=BLACK, children=[
+                    Text("This is a test")
+                ]),
                 Box(fill=WHITE, outline=BLACK),
             ]),
         Box(margin=5, fill = RED, outline = BLACK, horizontal=False,
             children=[
+                Text("Tomorrow"),
                 Box(fill=WHITE, outline=BLACK),
                 Box(fill=BLACK, outline=BLACK),
                 Box(fill=YELLOW, outline=BLACK),
