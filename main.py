@@ -4,8 +4,8 @@ from model import Surface
 
 # from waveshare_epd import epd7in3g
 
-# calendars = get_calendars()
-calendars = test_data()
+calendars = get_calendars()
+# calendars = test_data()
 
 image = layout_calendars(calendars, Surface())
 image.show("test")

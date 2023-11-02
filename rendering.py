@@ -222,24 +222,25 @@ class SingleChildBox:
 
 def layout_calendars(calendars: list[CalendarDay], surface):
     image = Image.new(
-        "RGB", (surface.right, surface.bottom), surface.WHITE
+        "RGB", (surface.right, surface.bottom), surface.BLACK
     )  # 255: clear the frame
     draw = ImageDraw.Draw(image)
-    box = EqualChildrenBox(padding=5)
+    box = EqualChildrenBox(padding=5, stroke=0)
     h1_font = font(size=FONT_SIZE_H1)
     for day in calendars:
-        day_box = StackChildrenBox(padding=5, outline=BLACK, horizontal=False)
+        day_box = StackChildrenBox(padding=5, stroke=0, horizontal=False)
         day_box.children.append(
             Text(
                 f"{weekdays[day.date.weekday()]} {day.date.isoformat()}",
                 font=h1_font,
+                color=WHITE,
             ),
         )
 
         for event in day.whole_day_events:
             day_box.children.append(
                 SingleChildBox(
-                    outline=BLACK,
+                    fill=WHITE,
                     margin=2,
                     child=Text(f"{event.owner}\n    {event.summary}"),
                 )
@@ -247,7 +248,7 @@ def layout_calendars(calendars: list[CalendarDay], surface):
         for event in day.timed_events:
             day_box.children.append(
                 SingleChildBox(
-                    outline=BLACK,
+                    fill=WHITE,
                     margin=2,
                     child=Text(
                         f"{event.owner}\n{event.start_time.hour}:{event.start_time.minute}\n    {event.summary}"

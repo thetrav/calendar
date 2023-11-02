@@ -76,7 +76,6 @@ def list_google_calendars(creds):
 def list_google_events(creds, calendar_id, min, max):
     try:
         service = build("calendar", "v3", credentials=creds)
-        # TODO: fix handling of timezone, we don't actually want UTC, we want local time
         events_result = (
             service.events()
             .list(
@@ -119,7 +118,12 @@ def get_calendars():
     tomorrow = today + datetime.timedelta(days=1)
     calendars = [CalendarDay(date=today.date()), CalendarDay(date=tomorrow.date())]
     for gcal in google_calendars:
-        events = list_google_events(creds, gcal.id, today, tomorrow)
+        events = list_google_events(
+            creds,
+            gcal.id,
+            today,
+            tomorrow + datetime.timedelta(days=1) - datetime.timedelta(seconds=1),
+        )
         add_events_to_calendars(events, gcal.name, calendars)
     for cal in calendars:
         cal.whole_day_events.sort(key=attrgetter("start_time"))
