@@ -29,20 +29,109 @@ def font(file=DEFAULT_FONT_FILE, size=FONT_SIZE_SUMMARY):
     return ImageFont.truetype(file, size)
 
 
+def find_break_index(line, font, pixel_width):
+    i = len(line) - 1
+    while i > 0:
+        length = font.getlength(line[:i])
+        if length > pixel_width:
+            i -= 1
+            continue
+
+        return find_nearest_separator(line, i)
+    return 1
+
+
+def find_nearest_separator(line, max):
+    i = max
+    while i > 0:
+        if line[i] == " ":
+            return i
+        i -= 1
+    return max
+
+
+def split_line(lines, line, font, pixel_width):
+    length = font.getlength(line)
+
+    if length <= pixel_width:
+        lines.append(line)
+        return
+    break_index = find_break_index(line, font, pixel_width)
+    lines.append(line[:break_index])
+    split_line(lines, line[break_index:], font, pixel_width)
+
+
 @dataclass
 class Text:
     text: str
+    _wrapped_text = ""
     color: int = BLACK
     font: object = font()
 
     def render(self, draw: ImageDraw, surface: Surface):
-        draw.text(
-            (surface.left, surface.top), self.text, font=self.font, fill=self.color
-        )
+        text = self.wrapped_text(surface.right - surface.left)
+        draw.text((surface.left, surface.top), text, font=self.font, fill=self.color)
+
+    def wrapped_text(self, width):
+        if self._wrapped_text != "":
+            return self._wrapped_text
+        lines = []
+        for line in self.text.split("\n"):
+            split_line(lines, line, self.font, width)
+        self._wrapped_text = "\n".join(lines)
+        return self._wrapped_text
+
+    def height(self, width: int):
+        _, _, _, height = self.font.getbbox(self.text)
+        lines = len(self.wrapped_text(width).split("\n"))
+        h = lines * (height + 4)
+
+        return h
 
 
 @dataclass
-class Box:
+class StackChildrenBox:
+    padding: int = PADDING
+    margin: int = 0
+    stroke: int = 1
+    outline: int = None
+    horizontal: bool = True
+    fill: int = None
+    children: list = field(default_factory=list)
+
+    def render(self, draw: ImageDraw, surface: Surface):
+        t = surface.top
+        b = surface.bottom
+        l = surface.left
+        r = surface.right
+
+        m = self.margin
+        p = self.padding
+
+        if self.stroke > 0:
+            border = (l + m, t + m, r - m, b - m)
+            draw.rectangle(
+                border, fill=self.fill, outline=self.outline, width=self.stroke
+            )
+
+        t = t + m + p
+        for child in self.children:
+            cl = l + m + p
+            cr = r - m - p
+            cw = cr - cl
+            ch = child.height(cw)
+            cb = t + ch
+            if cb > b:
+                cb = b
+            cs = Surface(top=t, left=cl, right=cr, bottom=cb)
+            child.render(draw, cs)
+            t = t + ch
+            if cb == b:
+                return
+
+
+@dataclass
+class EqualChildrenBox:
     padding: int = PADDING
     margin: int = 0
     stroke: int = 1
@@ -86,42 +175,94 @@ class Box:
             child.render(draw, cs)
 
 
+@dataclass
+class SingleChildBox:
+    padding: int = PADDING
+    margin: int = 0
+    stroke: int = 1
+    outline: int = None
+    horizontal: bool = True
+    fill: int = None
+    child: object = None
+
+    def render(self, draw: ImageDraw, surface: Surface):
+        t = surface.top
+        b = surface.bottom
+        l = surface.left
+        r = surface.right
+
+        m = self.margin
+        p = self.padding
+        s = self.stroke
+
+        if self.stroke > 0:
+            border = (l + m, t + m, r - m, b - m)
+            draw.rectangle(
+                border, fill=self.fill, outline=self.outline, width=self.stroke
+            )
+
+        child = self.child
+        cl = l + m + p + s
+        cr = r - m - p - s
+        ct = t + m + p + s
+        cb = b - m - p - s
+        cs = Surface(top=ct, left=cl, right=cr, bottom=cb)
+        child.render(draw, cs)
+
+    def height(self, width: int):
+        return (
+            self.child.height(
+                width - (self.margin * 2) - (self.padding * 2) - (self.stroke * 2)
+            )
+            + self.margin * 2
+            + self.padding * 2
+            + self.stroke * 2
+        )
+
+
 def layout_calendars(calendars: list[CalendarDay], surface):
     image = Image.new(
         "RGB", (surface.right, surface.bottom), surface.WHITE
     )  # 255: clear the frame
     draw = ImageDraw.Draw(image)
-    box = Box(padding=5)
+    box = EqualChildrenBox(padding=5)
     h1_font = font(size=FONT_SIZE_H1)
     for day in calendars:
-        day_box = Box(padding=5, outline=BLACK, horizontal=False)
+        day_box = StackChildrenBox(padding=5, outline=BLACK, horizontal=False)
         day_box.children.append(
-            Text(f"{weekdays[day.date.weekday()]} {day.date.isoformat()}", font=h1_font)
+            Text(
+                f"{weekdays[day.date.weekday()]} {day.date.isoformat()}",
+                font=h1_font,
+            ),
         )
+
         for event in day.whole_day_events:
             day_box.children.append(
-                Box(
-                    padding=5,
-                    outline=RED,
-                    horizontal=False,
-                    children=[Text(f"{event.owner}\n    {event.summary}")],
+                SingleChildBox(
+                    outline=BLACK,
+                    margin=2,
+                    child=Text(f"{event.owner}\n    {event.summary}"),
                 )
             )
         for event in day.timed_events:
             day_box.children.append(
-                Box(
-                    padding=5,
-                    horizontal=False,
-                    outline=RED,
-                    children=[
-                        Text(
-                            f"{event.owner}\n{event.start_time.hour}:{event.start_time.minute}\n    {event.summary}"
-                        )
-                    ],
+                SingleChildBox(
+                    outline=BLACK,
+                    margin=2,
+                    child=Text(
+                        f"{event.owner}\n{event.start_time.hour}:{event.start_time.minute}\n    {event.summary}"
+                    ),
                 )
             )
 
         box.children.append(day_box)
+
+    # spacing = 20
+    # for i in range(int(480 / spacing)):
+    #     t = i * spacing - 1
+    #     b = i * spacing
+    #     r = (380, t, 390, b)
+    #     draw.rectangle(r, RED)
 
     box.render(draw, surface)
 

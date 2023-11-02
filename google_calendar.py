@@ -139,7 +139,7 @@ def test_data():
     today.timed_events.append(
         Event(
             "Travis",
-            "Steve coming over",
+            "A very long summary that is going to take way more space than we have to fit in the calendar horizontally which will cause it to split across multiple lines",
             datetime.datetime(2023, 11, 2, 11, 30, tzinfo=ZoneInfo(TIMEZONE)),
         )
     )
