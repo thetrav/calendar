@@ -55,6 +55,5 @@ TODO: change to one where I can scan a QR code and do it on my phone
 ## Rendering
 
 TODO: calendar name to avatar
-TODO: small chip on left with avatar & time, summary on right with larger text
 TODO: center day headings
 

@@ -1,11 +1,12 @@
 from PIL import Image, ImageDraw, ImageFont
 from dataclasses import dataclass, field
 from model import Surface
-from google_calendar import CalendarDay, Event
 
 FONT_SIZE_H1 = 24
-FONT_SIZE_SUMMARY = 12
+FONT_SIZE_DEFAULT = 12
+FONT_SIZE_SUMMARY = 18
 PADDING = 5
+LINE_SPACING = 4
 
 BLACK = 0x000000  #   00  BGR
 WHITE = 0xFFFFFF  #   01
@@ -14,18 +15,12 @@ RED = 0x0000FF  #   11
 
 DEFAULT_FONT_FILE = "Font.ttc"
 
-weekdays = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-]
+
+def borders(box) -> int:
+    return box.margin * 2 + box.stroke * 2 + box.padding * 2
 
 
-def font(file=DEFAULT_FONT_FILE, size=FONT_SIZE_SUMMARY):
+def font(file=DEFAULT_FONT_FILE, size=FONT_SIZE_DEFAULT):
     return ImageFont.truetype(file, size)
 
 
@@ -67,10 +62,16 @@ class Text:
     _wrapped_text = ""
     color: int = BLACK
     font: object = font()
+    padding_top: int = 0
 
     def render(self, draw: ImageDraw, surface: Surface):
         text = self.wrapped_text(surface.right - surface.left)
-        draw.text((surface.left, surface.top), text, font=self.font, fill=self.color)
+        draw.text(
+            (surface.left, surface.top + self.padding_top),
+            text,
+            font=self.font,
+            fill=self.color,
+        )
 
     def wrapped_text(self, width):
         if self._wrapped_text != "":
@@ -84,7 +85,7 @@ class Text:
     def height(self, width: int):
         _, _, _, height = self.font.getbbox(self.text)
         lines = len(self.wrapped_text(width).split("\n"))
-        h = lines * (height + 4)
+        h = lines * (height + LINE_SPACING)
 
         return h
 
@@ -128,6 +129,52 @@ class StackChildrenBox:
             t = t + ch
             if cb == b:
                 return
+
+
+@dataclass
+class RightStretchBox:
+    padding: int = PADDING
+    margin: int = 0
+    stroke: int = 1
+    outline: int = None
+    horizontal: bool = True
+    fill: int = None
+    left: object = None
+    left_width: int = 0
+    right: object = None
+
+    def height(self, width):
+        return max(
+            self.left.height(self.left_width - borders(self) / 2),
+            self.right.height(width - self.left_width - borders(self) / 2),
+        ) + borders(self)
+
+    def render(self, draw: ImageDraw, surface: Surface):
+        t = surface.top
+        b = surface.bottom
+        l = surface.left
+        r = surface.right
+        w = r - l
+
+        m = self.margin
+        p = self.padding
+
+        if self.stroke > 0:
+            border = (l + m, t + m, r - m, b - m)
+            draw.rectangle(
+                border, fill=self.fill, outline=self.outline, width=self.stroke
+            )
+
+        cl = l + m + p
+        cr = cl + self.left_width
+        ct = t + m + p
+        cb = self.height(w)
+        cs = Surface(top=ct, left=cl, right=cr, bottom=cb)
+        self.left.render(draw, cs)
+        cl = cr
+        cr = r - m - p
+        cs = Surface(top=ct, left=cl, right=cr, bottom=cb)
+        self.right.render(draw, cs)
 
 
 @dataclass
@@ -218,61 +265,3 @@ class SingleChildBox:
             + self.padding * 2
             + self.stroke * 2
         )
-
-
-def layout_calendars(calendars: list[CalendarDay], surface):
-    image = Image.new(
-        "RGB", (surface.right, surface.bottom), surface.BLACK
-    )  # 255: clear the frame
-    draw = ImageDraw.Draw(image)
-    box = EqualChildrenBox(padding=5, stroke=0)
-    h1_font = font(size=FONT_SIZE_H1)
-    for day in calendars:
-        day_box = StackChildrenBox(padding=5, stroke=0, horizontal=False)
-        day_box.children.append(
-            Text(
-                f"{weekdays[day.date.weekday()]} {day.date.isoformat()}",
-                font=h1_font,
-                color=WHITE,
-            ),
-        )
-
-        for event in day.whole_day_events:
-            day_box.children.append(
-                SingleChildBox(
-                    fill=WHITE,
-                    margin=2,
-                    child=Text(f"{event.owner}\n    {event.summary}"),
-                )
-            )
-        for event in day.timed_events:
-            day_box.children.append(
-                SingleChildBox(
-                    fill=WHITE,
-                    margin=2,
-                    child=Text(
-                        f"{event.owner}\n{event.start_time.hour}:{event.start_time.minute}\n    {event.summary}"
-                    ),
-                )
-            )
-
-        box.children.append(day_box)
-
-    # spacing = 20
-    # for i in range(int(480 / spacing)):
-    #     t = i * spacing - 1
-    #     b = i * spacing
-    #     r = (380, t, 390, b)
-    #     draw.rectangle(r, RED)
-
-    box.render(draw, surface)
-
-    # draw.text((5, 0), 'hello beth', font = font, fill = surface.RED)
-
-    # draw.line((5, 170, 80, 245), fill = surface.RED)
-    # draw.line((80, 170, 5, 245), fill = surface.YELLOW)
-    # draw.rectangle((5, 170, 80, 245), outline = surface.BLACK)
-    # draw.rectangle((90, 170, 165, 245), fill = surface.YELLOW)
-    # draw.arc((5, 250, 80, 325), 0, 360, fill = surface.BLACK)
-    # draw.chord((90, 250, 165, 325), 0, 360, fill = surface.RED)
-    return image

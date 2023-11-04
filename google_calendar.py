@@ -109,7 +109,7 @@ def add_events_to_calendars(events_from_google, calendar_name, calendars):
                 dest.whole_day_events.append(event)
 
 
-def get_calendars():
+def get_calendars(filter):
     creds = load_google_creds()
     google_calendars = list_google_calendars(creds)
     today = datetime.datetime.combine(
@@ -118,13 +118,16 @@ def get_calendars():
     tomorrow = today + datetime.timedelta(days=1)
     calendars = [CalendarDay(date=today.date()), CalendarDay(date=tomorrow.date())]
     for gcal in google_calendars:
-        events = list_google_events(
-            creds,
-            gcal.id,
-            today,
-            tomorrow + datetime.timedelta(days=1) - datetime.timedelta(seconds=1),
-        )
-        add_events_to_calendars(events, gcal.name, calendars)
+        if gcal.id in filter:
+            events = list_google_events(
+                creds,
+                gcal.id,
+                today,
+                tomorrow + datetime.timedelta(days=1) - datetime.timedelta(seconds=1),
+            )
+            add_events_to_calendars(events, filter[gcal.id], calendars)
+        else:
+            print(f"skipping id: {gcal.id} name: {gcal.name}")
     for cal in calendars:
         cal.whole_day_events.sort(key=attrgetter("start_time"))
         cal.timed_events.sort(key=attrgetter("start_time"))
@@ -139,17 +142,17 @@ def test_data():
     calendars = [CalendarDay(date=today.date()), CalendarDay(date=tomorrow.date())]
     today = calendars[0]
     tomorrow = calendars[1]
-    today.whole_day_events.append(Event("Travis", "Working on calendar epaper thing"))
+    today.whole_day_events.append(Event("Trav", "Working on calendar epaper thing"))
     today.timed_events.append(
         Event(
-            "Travis",
+            "Beth",
             "A very long summary that is going to take way more space than we have to fit in the calendar horizontally which will cause it to split across multiple lines",
             datetime.datetime(2023, 11, 2, 11, 30, tzinfo=ZoneInfo(TIMEZONE)),
         )
     )
     event_time = datetime.datetime(2023, 11, 3, 9, tzinfo=ZoneInfo(TIMEZONE))
     for n in range(10):
-        tomorrow.timed_events.append(Event("Travis", f"fake event #{n}", event_time))
+        tomorrow.timed_events.append(Event("B & T", f"fake event #{n}", event_time))
         event_time = event_time + datetime.timedelta(minutes=30)
     return calendars
 

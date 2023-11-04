@@ -1,25 +1,40 @@
 from google_calendar import get_calendars, test_data
-from rendering import layout_calendars
+from layout import layout_calendars
 from model import Surface
 
-# from waveshare_epd import epd7in3g
+filter = {
+    "bethskurrie@gmail.com": "Beth",
+    "the.trav@gmail.com": "Trav",
+    "15toskvvqv2uetsil1irv5l2rs@group.calendar.google.com": "B & T",
+    "a6fo3oaslp3kvriuiqhpuloij4@group.calendar.google.com": "POPS",
+}
 
-# calendars = get_calendars()
-calendars = test_data()
 
-image = layout_calendars(calendars, Surface())
-image.show("test")
+def run_on_hardware():
+    from waveshare_epd import epd7in3g
 
-# try:
-#     epd = epd7in3g.EPD()
-#     epd.init()
-#     epd.display(epd.getbuffer(image))
-#     epd.sleep()
+    calendars = get_calendars(filter)
+    image = layout_calendars(calendars, Surface())
+    try:
+        epd = epd7in3g.EPD()
+        epd.init()
+        epd.display(epd.getbuffer(image))
+        epd.sleep()
 
-# except IOError as e:
-#     print(f"error: {e}")
+    except IOError as e:
+        print(f"error: {e}")
 
-# except KeyboardInterrupt:
-#     print("ctrl + c:")
-#     epd7in3g.epdconfig.module_exit()
-#     exit()
+    except KeyboardInterrupt:
+        print("ctrl + c:")
+        epd7in3g.epdconfig.module_exit()
+        exit()
+
+
+def run_locally():
+    calendars = test_data()
+    # calendars = get_calendars(filter)
+    image = layout_calendars(calendars, Surface())
+    image.show("test")
+
+
+run_on_hardware()
