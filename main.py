@@ -1,6 +1,9 @@
-from google_calendar import get_calendars, test_data
+from google_calendar import get_calendars, test_data, load_google_creds
 from layout import layout_calendars
 from model import Surface
+from qr import make_qr_code
+
+AUTH_URL = "https://localhost:8080/calendar_auth"
 
 filter = {
     "bethskurrie@gmail.com": "Beth",
@@ -10,11 +13,9 @@ filter = {
 }
 
 
-def run_on_hardware():
+def hardware_render(image):
     from waveshare_epd import epd7in3g
 
-    calendars = get_calendars(filter)
-    image = layout_calendars(calendars, Surface())
     try:
         epd = epd7in3g.EPD()
         epd.init()
@@ -30,11 +31,22 @@ def run_on_hardware():
         exit()
 
 
-def run_locally():
-    calendars = test_data()
-    # calendars = get_calendars(filter)
-    image = layout_calendars(calendars, Surface())
+def local_render(image):
     image.show("test")
 
 
-run_on_hardware()
+def run(render):
+    surface = Surface()
+    creds = load_google_creds()
+    if not creds or not creds.valid:
+        image = make_qr_code(AUTH_URL, surface)
+
+        render(image)
+    else:
+        # calendars = test_data()
+        calendars = get_calendars(creds, filter)
+        image = layout_calendars(calendars, surface)
+        render(image)
+
+
+run(local_render)

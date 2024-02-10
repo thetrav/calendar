@@ -54,12 +54,15 @@ def load_google_creds():
         except:
             creds = None
 
-    if not creds or not creds.valid:
-        # TODO: the device has no input, so we need to replace this with some other flow
-        flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-        creds = flow.run_local_server(port=0)
-        with open(token_filename, "w") as token:
-            token.write(creds.to_json())
+    return creds
+
+
+def new_creds_via_browser(creds):
+    # TODO: the device has no input, so we need to replace this with some other flow
+    flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+    creds = flow.run_local_server(port=0)
+    with open(token_filename, "w") as token:
+        token.write(creds.to_json())
     return creds
 
 
@@ -109,8 +112,7 @@ def add_events_to_calendars(events_from_google, calendar_name, calendars):
                 dest.whole_day_events.append(event)
 
 
-def get_calendars(filter):
-    creds = load_google_creds()
+def get_calendars(creds, filter):
     google_calendars = list_google_calendars(creds)
     today = datetime.datetime.combine(
         datetime.date.today(), datetime.time.min, tzinfo=ZoneInfo(TIMEZONE)

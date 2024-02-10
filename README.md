@@ -47,6 +47,13 @@ TODO: add waveshare dependencies to requirements.txt
 
 # Runtime
 
+Schedule the main screen update for hourly with:
+`crontab -e`
+
+```
+0 * * * * cd /home/thetrav/calendar && /usr/bin/python /home/thetrav/calendar/main.py >> /home/thetrav/calendar/log.txt
+```
+
 TODO: add runtime instructions
 ## Google Authentication
 
@@ -54,6 +61,4 @@ TODO: change to one where I can scan a QR code and do it on my phone
 
 ## Rendering
 
-TODO: calendar name to avatar
-TODO: center day headings
 
