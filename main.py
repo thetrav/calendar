@@ -3,14 +3,7 @@ from layout import layout_calendars
 from model import Surface
 from qr import make_qr_code
 
-AUTH_URL = "https://localhost:8080/calendar_auth"
-
-filter = {
-    "bethskurrie@gmail.com": "Beth",
-    "the.trav@gmail.com": "Trav",
-    "15toskvvqv2uetsil1irv5l2rs@group.calendar.google.com": "B & T",
-    "a6fo3oaslp3kvriuiqhpuloij4@group.calendar.google.com": "POPS",
-}
+from env import AUTH_URL, filter
 
 
 def hardware_render(image):

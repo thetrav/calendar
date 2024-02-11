@@ -47,6 +47,14 @@ TODO: add waveshare dependencies to requirements.txt
 
 # Runtime
 
+git clone or copy this repo to the rasberry pi.  I keep mine in /home/thetrav/calendar
+
+install dependencies with:
+```
+pip install -r requirements.txt
+```
+
+## scheduling
 Schedule the main screen update for hourly with:
 `crontab -e`
 
@@ -54,7 +62,22 @@ Schedule the main screen update for hourly with:
 0 * * * * cd /home/thetrav/calendar && /usr/bin/python /home/thetrav/calendar/main.py >> /home/thetrav/calendar/log.txt
 ```
 
-TODO: add runtime instructions
+## web server
+I use nginx for https and python web server
+
+```
+sudo apt install nginx
+```
+
+Next I generated a self signed cert following the guide here:
+https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl-certificate-for-nginx-in-ubuntu-16-04
+
+I hit enter for all params except common name, where I enter the rasberry pi's ipv4 address (I have the DHCP lease statically asigned by my router)
+
+
+
+
+
 ## Google Authentication
 
 TODO: change to one where I can scan a QR code and do it on my phone
