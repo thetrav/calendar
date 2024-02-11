@@ -57,15 +57,6 @@ def load_google_creds():
     return creds
 
 
-def new_creds_via_browser(creds):
-    # TODO: the device has no input, so we need to replace this with some other flow
-    flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-    creds = flow.run_local_server(port=0)
-    with open(token_filename, "w") as token:
-        token.write(creds.to_json())
-    return creds
-
-
 def list_google_calendars(creds):
     try:
         service = build("calendar", "v3", credentials=creds)

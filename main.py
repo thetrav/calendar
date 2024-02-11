@@ -4,7 +4,7 @@ from model import Surface
 from qr import make_qr_code
 from datetime import datetime
 
-from env import AUTH_URL, filter
+from env import filter, SERVER_ADDRESS
 
 
 def hardware_render(image):
@@ -33,7 +33,7 @@ def run(render):
     surface = Surface()
     creds = load_google_creds()
     if not creds or not creds.valid:
-        image = make_qr_code(AUTH_URL, surface)
+        image = make_qr_code(SERVER_ADDRESS, surface)
 
         render(image)
     else:
@@ -43,5 +43,6 @@ def run(render):
         render(image)
 
 
-print("running: " + datetime.now().isoformat())
-run(local_render)
+if __name__ == "__main__":
+    print("running: " + datetime.now().isoformat())
+    run(hardware_render)
