@@ -2,6 +2,7 @@ from google_calendar import get_calendars, test_data, load_google_creds
 from layout import layout_calendars
 from model import Surface
 from qr import make_qr_code
+from datetime import datetime
 
 from env import AUTH_URL, filter
 
@@ -42,4 +43,5 @@ def run(render):
         render(image)
 
 
+print("running: " + datetime.now().isoformat())
 run(local_render)
