@@ -122,7 +122,7 @@ def get_calendars(creds, filter):
         else:
             print(f"skipping id: {gcal.id} name: {gcal.name}")
     for cal in calendars:
-        cal.whole_day_events.sort(key=attrgetter("start_time"))
+        cal.whole_day_events.sort(key=attrgetter("summary"))
         cal.timed_events.sort(key=attrgetter("start_time"))
     return calendars
 

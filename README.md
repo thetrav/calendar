@@ -75,13 +75,29 @@ https://www.digitalocean.com/community/tutorials/how-to-create-a-self-signed-ssl
 I hit enter for all params except common name, where I enter the rasberry pi's ipv4 address (I have the DHCP lease statically asigned by my router)
 
 
+## Python app server
+The server invokes a locally running cherryPi app which needs to be set up as service with:
+```
+sudo vi /lib/systemd/system/epcal.service
+```
+enter contents of epcal.service then reload with:
 
-
+```
+sudo systemctl daemon-reload
+```
 
 ## Google Authentication
 
-TODO: change to one where I can scan a QR code and do it on my phone
+The app will require client_secret.json in the project root.  
+You can download that file from google.
+They have a tutorial here: https://developers.google.com/identity/protocols/oauth2/web-server
+getting the API set up is part of the pre-requisites.
 
-## Rendering
+In order for it to work you need a public DNS entry (google doesn't trust ip's or local DNS names).
+My solution was to set a subdomain to resolve to a private network IP which I've told my router to always assign to the calendar rasberry pi.
 
+# Run without hardware
 
+While developing I run things locally, main.py contains a local and hardware rendering function, you can just switch which one you pass into the run function and everything else should work fine.
+
+I've also got a testData function for when I don't want to wait for a round trip from google or in case I want to test a hard-to-recreate data scenario.
