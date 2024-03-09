@@ -42,8 +42,11 @@ def local_render(image):
 
 def load_image(calendar_source, surface):
     last_render = None
-    with open("/tmp/ecalendar-last-render.json") as f:
-        last_render = f.read()
+    try:
+        with open("/tmp/ecalendar-last-render.json") as f:
+            last_render = f.read()
+    except:
+        pass
     creds = calendar_source.load_creds()
     if not creds or not creds.valid:
         with open("/tmp/ecalendar-last-render.json", "w") as f:
@@ -73,4 +76,5 @@ def run(render, load_creds, width, height):
 
 if __name__ == "__main__":
     print("running: " + datetime.now().isoformat())
+    # run(hardware_render, CalendarSource(stubbed=False), 1304, 984)
     run(local_render, CalendarSource(stubbed=True), 1304, 984)

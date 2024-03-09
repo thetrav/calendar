@@ -2,11 +2,11 @@ from PIL import Image, ImageDraw, ImageFont
 from dataclasses import dataclass, field
 from model import Surface
 
-FONT_SIZE_H1 = 24
-FONT_SIZE_DEFAULT = 12
-FONT_SIZE_SUMMARY = 18
+FONT_SIZE_H1 = 48
+FONT_SIZE_DEFAULT = 24
+FONT_SIZE_SUMMARY = 36
 PADDING = 5
-LINE_SPACING = 4
+LINE_SPACING = 8
 
 BLACK = 0x000000  #   00  BGR
 WHITE = 0xFFFFFF  #   01

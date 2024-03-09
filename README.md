@@ -6,7 +6,6 @@ Playing around with my new waveshare 12.48inch e-paper module(b), going to try a
 
 There's something a bit screwy around "burn in" I've read both that it occurs and also that it doesn't occur.  Try to avoid leaving the screen with stuff on it for more than a day, if you want it always on, do the clear thing at least daily so it jiggles all those pixels around.
 
-TODO: add venv instructions
 # venv
 Keep the python peas from touching the other python carrots
 
