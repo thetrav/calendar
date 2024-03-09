@@ -1,8 +1,8 @@
 import cherrypy
 import google_auth_oauthlib.flow
 from env import SERVER_ADDRESS, SCOPE, login_hint
-from main import run, local_render, hardware_render
-
+from main import run, hardware_render
+from google_calendar import CalendarSource
 
 class CalendarWebServer(object):
     @cherrypy.expose
@@ -41,7 +41,7 @@ class CalendarWebServer(object):
         with open("token.json", "w") as text_file:
             print(flow.credentials.to_json(), file=text_file)
 
-        run(hardware_render)
+        run(hardware_render, CalendarSource(stubbed=True), 1304, 984)
 
         return "Welcome back"
 
