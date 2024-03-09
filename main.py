@@ -54,6 +54,6 @@ def fake_creds():
 
 if __name__ == "__main__":
     print("running: " + datetime.now().isoformat())
-    run(local_render, load_google_creds, 1304, 984)
+    # run(local_render, load_google_creds, 1304, 984)
 
-    run(local_render, fake_creds, 1304, 984)
+    run(hardware_render, fake_creds, 1304, 984)
