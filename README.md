@@ -37,6 +37,10 @@ This is really only relevant on the pi itself, which is running a debian thingy,
 TODO: add system dependencies
 ```
 
+the 12.48 screen uses some rando's lgpio c library which I'm not super happy about
+instructions here:
+https://www.waveshare.com/wiki/12.48inch_e-Paper_Module_(B)#Install_Python_Library
+
 ## pip
 python dependencies are managed in `requirements.txt`
 when in venv mode install using:

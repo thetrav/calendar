@@ -4,17 +4,20 @@ from layout import layout_calendars
 from model import Surface
 from qr import make_qr_code
 from datetime import datetime
+import json
 
 from env import filter, SERVER_ADDRESS
 
 
 def hardware_render(image):
     from waveshare_epd import epd12in48b
+    from PIL import Image
 
     try:
         epd = epd12in48b.EPD()
-        epd.init()
-        epd.display(image)
+        epd.Init()
+        Redimage = Image.new("1", (epd12in48b.EPD_WIDTH, epd12in48b.EPD_HEIGHT), 255)
+        epd.display(image, Redimage)
         epd.EPD_Sleep()
 
     except IOError as e:
@@ -30,16 +33,34 @@ def local_render(image):
     image.show("test")
 
 
-def run(render, load_creds, width, height):
-    surface = Surface(0, 0, width, height)
+def load_image(load_creds, surface):
+    last_render = None
+    with open("/tmp/ecalendar-last-render.json") as f:
+        last_render = f.read()
     creds = load_creds()
     if not creds or not creds.valid:
-        image = make_qr_code(SERVER_ADDRESS, surface)
-        render(image)
+        with open("/tmp/ecalendar-last-render.json", "w") as f:
+            f.write("credentials")
+        if last_render == "credentials":
+            return
+        return make_qr_code(SERVER_ADDRESS, surface)
     else:
-        calendars = test_data()
-        # calendars = get_calendars(creds, filter)
-        image = layout_calendars(calendars, surface)
+        calendars = get_calendars(creds, filter)
+        data_json = json.dumps(calendars)
+        if last_render == data_json:
+            return
+        with open("/tmp/ecalendar-last-render.json", "w") as f:
+            f.write(data_json)
+        return layout_calendars(calendars, surface)
+
+
+def run(render, load_creds, width, height):
+    surface = Surface(0, 0, width, height)
+    image = load_image(load_creds, surface)
+    if image is None:
+        print("no update")
+    else:
+        print("updating")
         render(image)
 
 
