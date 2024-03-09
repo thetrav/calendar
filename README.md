@@ -1,6 +1,6 @@
 # ePaper Calendar
 
-Playing around with my new waveshare 7in3g e-paper screen, going to try and render a calendar
+Playing around with my new waveshare 12.48inch e-paper module(b), going to try and render a calendar
 
 # WARNING
 
