@@ -1,12 +1,19 @@
-from dataclasses import dataclass
-from google_calendar import get_calendars, test_data, load_google_creds
+from google_calendar import CalendarSource
 from layout import layout_calendars
 from model import Surface
 from qr import make_qr_code
-from datetime import datetime
+from datetime import datetime, date
 import json
-
+import dataclasses
 from env import filter, SERVER_ADDRESS
+
+
+def json_default_encoder(o):
+    if isinstance(o, (date, datetime)):
+        return o.isoformat()
+    if dataclasses.is_dataclass(o):
+        return dataclasses.asdict(o)
+    return str(o)
 
 
 def hardware_render(image):
@@ -33,20 +40,20 @@ def local_render(image):
     image.show("test")
 
 
-def load_image(load_creds, surface):
+def load_image(calendar_source, surface):
     last_render = None
     with open("/tmp/ecalendar-last-render.json") as f:
         last_render = f.read()
-    creds = load_creds()
+    creds = calendar_source.load_creds()
     if not creds or not creds.valid:
         with open("/tmp/ecalendar-last-render.json", "w") as f:
-            f.write("credentials")
-        if last_render == "credentials":
+            f.write('["credentials"]')
+        if last_render == '["credentials"]':
             return
         return make_qr_code(SERVER_ADDRESS, surface)
     else:
-        calendars = get_calendars(creds, filter)
-        data_json = json.dumps(calendars)
+        calendars = calendar_source.load_data(creds, filter)
+        data_json = json.dumps(calendars, sort_keys=True, default=json_default_encoder)
         if last_render == data_json:
             return
         with open("/tmp/ecalendar-last-render.json", "w") as f:
@@ -64,17 +71,6 @@ def run(render, load_creds, width, height):
         render(image)
 
 
-@dataclass
-class FakeCreds:
-    valid: bool
-
-
-def fake_creds():
-    return FakeCreds(valid=True)
-
-
 if __name__ == "__main__":
     print("running: " + datetime.now().isoformat())
-    # run(local_render, load_google_creds, 1304, 984)
-
-    run(hardware_render, fake_creds, 1304, 984)
+    run(local_render, CalendarSource(stubbed=True), 1304, 984)

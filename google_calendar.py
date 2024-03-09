@@ -150,5 +150,25 @@ def test_data():
     return calendars
 
 
+@dataclass
+class FakeCreds:
+    valid: bool
+
+
+@dataclass
+class CalendarSource:
+    stubbed: bool
+
+    def load_creds(self):
+        if self.stubbed:
+            return FakeCreds(valid=True)
+        return load_google_creds()
+
+    def load_data(self, creds, filter):
+        if self.stubbed:
+            return test_data()
+        return get_calendars(creds, filter)
+
+
 if __name__ == "__main__":
     print(f"calendars: {get_calendars()}")
